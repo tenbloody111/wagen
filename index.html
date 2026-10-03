@@ -105,8 +105,8 @@
     <!-- Tombol Buat Link WA -->
     <button class="btn-submit" onclick="generateWALink(1)">Buat Link WA</button>
     
-    <!-- Tombol Lag (1000x & Langsung Buka) -->
-    <button class="btn-lag" onclick="generateWALink(1000, true)">Lag (1000x & Buka Link)</button>
+    <!-- Tombol Lag Teroptimasi -->
+    <button class="btn-lag" onclick="generateLagLinkDirect()">Lag (1000x Direct Open)</button>
 
     <div class="result" id="resultArea" style="display:none;">
         <p><strong>Link Hasil:</strong></p>
@@ -124,9 +124,8 @@
     <button id="dynamicScrollBtn" class="scroll-btn" title="Scroll">↑</button>
 
     <script>
-        let currentMode = 'with_phone'; // Default mode
+        let currentMode = 'with_phone';
 
-        // Fungsi berpindah mode pengiriman
         function switchMode(mode) {
             currentMode = mode;
             const phoneGroup = document.getElementById('phoneGroup');
@@ -146,8 +145,8 @@
             document.getElementById('resultArea').style.display = 'none';
         }
 
-        // Fungsi membuat link WhatsApp
-        function generateWALink(multiplier = 1, autoOpen = false) {
+        // Fungsi Pembuatan Link Normal (1x / 2x)
+        function generateWALink(multiplier = 1) {
             const rawMessage = document.getElementById('message').value.trim();
             
             if (!rawMessage) {
@@ -155,10 +154,9 @@
                 return;
             }
 
-            // Menggandakan pesan sesuai multiplier (1x, 2x, atau 1000x)
             let finalMessage = rawMessage;
-            if (multiplier > 1) {
-                finalMessage = Array(multiplier).fill(rawMessage).join(" ");
+            if (multiplier === 2) {
+                finalMessage = rawMessage + " " + rawMessage;
             }
 
             const encodedMessage = encodeURIComponent(finalMessage);
@@ -175,28 +173,50 @@
                 waLink = `https://wa.me/?text=${encodedMessage}`;
             }
 
-            // Tampilkan hasil di UI
             document.getElementById('linkOutput').innerText = waLink;
             document.getElementById('testLink').href = waLink;
             document.getElementById('resultArea').style.display = 'block';
-
-            // Jika diklik melalui tombol Lag (autoOpen = true), langsung buka link di tab baru
-            if (autoOpen) {
-                window.open(waLink, '_blank');
-            }
         }
 
-        // Fungsi scroll ke paling atas
+        // Fungsi Khusus Mode Lag (Teroptimasi Tanpa Render DOM)
+        function generateLagLinkDirect() {
+            const rawMessage = document.getElementById('message').value.trim();
+            
+            if (!rawMessage) {
+                alert('Silakan masukkan pesan teks terlebih dahulu!');
+                return;
+            }
+
+            let phone = '';
+            if (currentMode === 'with_phone') {
+                phone = document.getElementById('phone').value.trim();
+                if (!phone) {
+                    alert('Silakan masukkan nomor telepon!');
+                    return;
+                }
+            }
+
+            // Gunakan .repeat() untuk pengolahan string instan & efisien di memori
+            const finalMessage = (rawMessage + " ").repeat(1000).trimEnd();
+            const encodedMessage = encodeURIComponent(finalMessage);
+
+            const waLink = currentMode === 'with_phone'
+                ? `https://wa.me/${phone}?text=${encodedMessage}`
+                : `https://wa.me/?text=${encodedMessage}`;
+
+            // Langsung buka link tanpa menyentuh DOM/layar agar browser tidak freeze
+            window.open(waLink, '_blank');
+        }
+
+        // Logika Floating Scroll Button
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Fungsi scroll ke paling bawah
         function scrollToBottom() {
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
 
-        // Logika Deteksi Scroll & Auto-Hide
         let lastScrollY = window.scrollY;
         let scrollTimeout = null;
 
