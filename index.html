@@ -3,16 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator Link WA</title>
+    <title>Generator Link WA - Multi Mode</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 20px 80px 20px; }
+        
+        /* Mode Switcher Tabs */
+        .mode-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mode-btn { 
+            flex: 1; 
+            padding: 10px; 
+            background: #e0e0e0; 
+            color: #333; 
+            border: 2px solid transparent; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .mode-btn.active { 
+            background: #075e54; 
+            color: white; 
+            border-color: #128c7e; 
+        }
+
         input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         button.btn-submit { width: 100%; padding: 12px; background: #25D366; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; }
+        button.btn-submit:hover { background: #20ba5a; }
+
         .result { margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 4px; word-break: break-all; }
         a { color: #075e54; font-weight: bold; }
 
-        /* Tombol Floating Scroll Down */
-        .scroll-down-btn {
+        /* Style untuk tombol Opsi Biasa & 2x */
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-opt { flex: 1; padding: 10px; background: #075e54; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; }
+        .btn-opt:hover { background: #128c7e; }
+
+        /* Tombol Floating Single-Position (Pojok Kanan Bawah) */
+        .scroll-btn {
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -25,82 +53,174 @@
             font-size: 22px;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            display: none;
+            display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, background-color 0.3s ease;
             z-index: 1000;
         }
-        .scroll-down-btn:hover { background-color: #128c7e; }
+        .scroll-btn:hover { background-color: #128c7e; }
     </style>
 </head>
 <body>
 
     <h2>WhatsApp Link Generator</h2>
     
-    <label>Nomor WhatsApp (dengan kode negara tanpa +):</label>
-    <input type="number" id="phone" value="62821782920" placeholder="Contoh: 628123456789">
+    <!-- Pilih Mode Pengiriman -->
+    <label><strong>Pilih Mode Pengiriman:</strong></label>
+    <div class="mode-container">
+        <button id="modeWithPhone" class="mode-btn active" onclick="switchMode('with_phone')">Dengan Nomor</button>
+        <button id="modeNoPhone" class="mode-btn" onclick="switchMode('no_phone')">Tanpa Nomor</button>
+    </div>
 
+    <!-- Input Nomor Telepon (Bisa Sembunyi) -->
+    <div id="phoneGroup">
+        <label>Nomor WhatsApp (dengan kode negara tanpa +):</label>
+        <input type="number" id="phone" value="62821782920" placeholder="Contoh: 628123456789">
+    </div>
+
+    <!-- Input Pesan -->
     <label>Pesan Teks Biasa:</label>
     <textarea id="message" rows="8" placeholder="Tulis pesan biasa di sini..."></textarea>
 
-    <button class="btn-submit" onclick="generateWALink()">Buat Link WA</button>
+    <button class="btn-submit" onclick="generateWALink(1)">Buat Link WA</button>
 
     <div class="result" id="resultArea" style="display:none;">
         <p><strong>Link Hasil:</strong></p>
         <p id="linkOutput"></p>
         <a id="testLink" href="#" target="_blank">Coba Buka Link</a>
+
+        <!-- Tombol Tambahan Biasa & 2x -->
+        <div class="btn-group">
+            <button class="btn-opt" onclick="generateWALink(1)">Biasa</button>
+            <button class="btn-opt" onclick="generateWALink(2)">2x</button>
+        </div>
     </div>
 
-    <!-- Tombol ↓ Floating -->
-    <button id="scrollToBottomBtn" class="scroll-down-btn" onclick="scrollToBottom()" title="Ke Paling Bawah">↓</button>
+    <!-- Tombol Floating Dynamic Scroll -->
+    <button id="dynamicScrollBtn" class="scroll-btn" title="Scroll">↑</button>
 
     <script>
-        function generateWALink() {
-            const phone = document.getElementById('phone').value.trim();
-            const message = document.getElementById('message').value.trim();
+        let currentMode = 'with_phone'; // Default mode
 
-            if (!phone) {
-                alert('Silakan masukkan nomor telepon!');
-                return;
+        // Fungsi berpindah mode pengiriman
+        function switchMode(mode) {
+            currentMode = mode;
+            const phoneGroup = document.getElementById('phoneGroup');
+            const btnWithPhone = document.getElementById('modeWithPhone');
+            const btnNoPhone = document.getElementById('modeNoPhone');
+
+            if (mode === 'with_phone') {
+                phoneGroup.style.display = 'block';
+                btnWithPhone.classList.add('active');
+                btnNoPhone.classList.remove('active');
+            } else {
+                phoneGroup.style.display = 'none';
+                btnNoPhone.classList.add('active');
+                btnWithPhone.classList.remove('active');
             }
 
-            const encodedMessage = encodeURIComponent(message);
-            const waLink = `https://wa.me/${phone}?text=${encodedMessage}`;
+            // Sembunyikan hasil lama jika mode diubah
+            document.getElementById('resultArea').style.display = 'none';
+        }
+
+        // Fungsi membuat link WhatsApp
+        function generateWALink(multiplier = 1) {
+            const rawMessage = document.getElementById('message').value.trim();
+            
+            // Siapkan pesan (1x atau 2x)
+            let finalMessage = rawMessage;
+            if (multiplier === 2) {
+                finalMessage = rawMessage + " " + rawMessage;
+            }
+
+            const encodedMessage = encodeURIComponent(finalMessage);
+            let waLink = '';
+
+            if (currentMode === 'with_phone') {
+                const phone = document.getElementById('phone').value.trim();
+                if (!phone) {
+                    alert('Silakan masukkan nomor telepon!');
+                    return;
+                }
+                // Mode 1: Dengan Nomor (wa.me/nomor?text=...)
+                waLink = `https://wa.me/${phone}?text=${encodedMessage}`;
+            } else {
+                // Mode 2: Tanpa Nomor (wa.me/?text=...)
+                waLink = `https://wa.me/?text=${encodedMessage}`;
+            }
 
             document.getElementById('linkOutput').innerText = waLink;
             document.getElementById('testLink').href = waLink;
             document.getElementById('resultArea').style.display = 'block';
-
-            checkScroll();
         }
 
-        // Fungsi scroll ke paling bawah halaman
+        // Fungsi scroll ke paling atas
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Fungsi scroll ke paling bawah
         function scrollToBottom() {
-            window.scrollTo({
-                top: document.body.scrollHeight,
-                behavior: 'smooth'
-            });
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
 
-        // Cek posisi scroll untuk menampilkan/menyembunyikan tombol
-        function checkScroll() {
-            const btn = document.getElementById('scrollToBottomBtn');
+        // Logika Deteksi Scroll & Auto-Hide
+        let lastScrollY = window.scrollY;
+        let scrollTimeout = null;
+
+        function handleScroll() {
+            const scrollBtn = document.getElementById('dynamicScrollBtn');
+            const currentScrollY = window.scrollY;
             const totalHeight = document.documentElement.scrollHeight;
-            const currentPosition = window.innerHeight + window.scrollY;
+            const windowHeight = window.innerHeight;
 
-            // Tombol muncul HANYA JIKA halaman bisa di-scroll dan belum berada di paling bawah
-            if (totalHeight > window.innerHeight && (totalHeight - currentPosition) > 50) {
-                btn.style.display = 'flex';
-            } else {
-                btn.style.display = 'none';
+            const isAtTop = currentScrollY <= 30;
+            const isAtBottom = (windowHeight + currentScrollY) >= (totalHeight - 30);
+
+            if (currentScrollY > lastScrollY) {
+                // Scroll Ke Bawah -> Tombol ↓
+                if (!isAtBottom) {
+                    scrollBtn.innerText = '↓';
+                    scrollBtn.onclick = scrollToBottom;
+                    scrollBtn.title = 'Ke Paling Bawah';
+                    showBtn(scrollBtn);
+                } else {
+                    hideBtn(scrollBtn);
+                }
+            } else if (currentScrollY < lastScrollY) {
+                // Scroll Ke Atas -> Tombol ↑
+                if (!isAtTop) {
+                    scrollBtn.innerText = '↑';
+                    scrollBtn.onclick = scrollToTop;
+                    scrollBtn.title = 'Ke Paling Atas';
+                    showBtn(scrollBtn);
+                } else {
+                    hideBtn(scrollBtn);
+                }
             }
+
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                hideBtn(scrollBtn);
+            }, 1200);
+
+            lastScrollY = currentScrollY;
         }
 
-        // Event listener saat scroll, ketik teks, atau resize browser
-        window.addEventListener('scroll', checkScroll);
-        window.addEventListener('resize', checkScroll);
-        document.getElementById('message').addEventListener('input', checkScroll);
+        function showBtn(btn) {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        }
+
+        function hideBtn(btn) {
+            btn.style.opacity = '0';
+            btn.style.pointerEvents = 'none';
+        }
+
+        window.addEventListener('scroll', handleScroll);
     </script>
 
 </body>
