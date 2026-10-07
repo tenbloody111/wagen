@@ -36,6 +36,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             box-sizing: border-box;
             width: 100%;
+            position: relative;
         }
 
         h2 {
@@ -53,7 +54,6 @@
             font-size: 14px;
         }
 
-        /* Type Switcher Tabs - Transisi dihapus agar UI perpindahan instan/cepat */
         .type-container {
             display: flex;
             gap: 8px;
@@ -81,7 +81,6 @@
             border-color: var(--primary-color);
         }
 
-        /* Mode Switcher Tabs */
         .mode-container {
             display: flex;
             gap: 10px;
@@ -106,7 +105,6 @@
             color: #ffffff;
         }
 
-        /* Fix Responsif Mobile pada Input Nomor */
         .phone-input-container {
             display: flex;
             gap: 8px;
@@ -159,7 +157,50 @@
             resize: vertical;
         }
 
-        /* Styling Tombol-tombol Utama */
+        /* Container Tombol Kirim & Pengaturan */
+        .action-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        button.btn-direct {
+            flex: 1;
+            padding: 12px;
+            background: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        button.btn-direct:hover {
+            background: var(--primary-hover);
+        }
+
+        button.btn-settings {
+            width: 44px;
+            height: 44px;
+            background: #e4e6eb;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        button.btn-settings:hover {
+            background: #d8dadf;
+        }
+
         button.btn-submit {
             width: 100%;
             padding: 12px;
@@ -176,38 +217,72 @@
             background: var(--accent-hover);
         }
 
-        button.btn-direct {
-            width: 100%;
-            padding: 12px;
-            background: var(--primary-color);
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
+        /* Menu Dropdown Pengaturan */
+        .settings-dropdown {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            padding: 12px 15px;
+            width: 220px;
+            z-index: 100;
+            box-sizing: border-box;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
             font-weight: 600;
-            font-size: 15px;
-            margin-top: 10px;
+            color: var(--text-main);
         }
 
-        button.btn-direct:hover {
-            background: var(--primary-hover);
+        /* Styling Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
         }
 
-        button.btn-lag {
-            width: 100%;
-            padding: 12px;
-            background: var(--danger-color);
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 15px;
-            margin-top: 10px;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .2s;
+            border-radius: 22px;
         }
 
-        button.btn-lag:hover {
-            background: var(--danger-hover);
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--danger-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(18px);
         }
 
         .file-input-group {
@@ -347,14 +422,25 @@
             <textarea id="photoCaption" rows="3" placeholder="Tuliskan keterangan foto..."></textarea>
         </div>
 
-        <!-- Tombol Aksi Utama -->
-        <button id="btnSubmitMain" class="btn-submit" onclick="handleAction(1)">Buat Link WhatsApp</button>
-        
-        <!-- Tombol Kirim Langsung -->
-        <button id="btnDirectSend" class="btn-direct" onclick="directOpenWALink()">Kirim</button>
+        <!-- Baris Tombol Kirim & Pengaturan Titik Tiga -->
+        <div id="actionRowGroup" class="action-row">
+            <button id="btnDirectSend" class="btn-direct" onclick="directOpenWALink()">Kirim</button>
+            <button id="btnSettingsToggle" class="btn-settings" onclick="toggleSettingsMenu(event)" title="Pengaturan">&#8942;</button>
+            
+            <!-- Menu Pengaturan Pop-up -->
+            <div id="settingsDropdown" class="settings-dropdown">
+                <div class="settings-item">
+                    <span>Mode Kirim 1000x</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggleLagMode" onchange="onLagToggleChange()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
 
-        <!-- Tombol Mode Lag -->
-        <button id="btnLagMain" class="btn-lag" onclick="generateLagLinkDirect()">Kirim 1000x</button>
+        <!-- Tombol Aksi Utama (Buat Link) -->
+        <button id="btnSubmitMain" class="btn-submit" onclick="handleAction(1)">Buat Link WhatsApp</button>
 
         <div class="result" id="resultArea" style="display:none;">
             <p><strong>Hasil Link:</strong></p>
@@ -395,7 +481,7 @@
         let currentMode = 'with_phone';
         let contentType = 'text';
 
-        // Element Caching untuk Operasi UI Instan
+        // Element Caching
         const tabText = document.getElementById('tabText');
         const tabFile = document.getElementById('tabFile');
         const tabPhoto = document.getElementById('tabPhoto');
@@ -406,8 +492,10 @@
         
         const btnSubmit = document.getElementById('btnSubmitMain');
         const btnDirect = document.getElementById('btnDirectSend');
-        const btnLag = document.getElementById('btnLagMain');
+        const actionRowGroup = document.getElementById('actionRowGroup');
         const resultArea = document.getElementById('resultArea');
+        const settingsDropdown = document.getElementById('settingsDropdown');
+        const toggleLagMode = document.getElementById('toggleLagMode');
 
         function getFullPhoneNumber() {
             const countryCode = document.getElementById('countryCode').value;
@@ -423,7 +511,31 @@
             return countryCode + rawPhone;
         }
 
-        // Fungsi Perpindahan Tab (Optimasi Instan)
+        // Toggle Tampilan Dropdown Pengaturan
+        function toggleSettingsMenu(event) {
+            event.stopPropagation();
+            const isVisible = settingsDropdown.style.display === 'block';
+            settingsDropdown.style.display = isVisible ? 'none' : 'block';
+        }
+
+        // Tutup menu saat mengklik di luar area pengaturan
+        document.addEventListener('click', function(e) {
+            if (!settingsDropdown.contains(e.target) && e.target.id !== 'btnSettingsToggle') {
+                settingsDropdown.style.display = 'none';
+            }
+        });
+
+        // Handler Perubahan Toggle Kirim 1000x
+        function onLagToggleChange() {
+            if (toggleLagMode.checked) {
+                btnDirect.style.backgroundColor = 'var(--danger-color)';
+                btnDirect.innerText = 'Kirim (1000x)';
+            } else {
+                btnDirect.style.backgroundColor = 'var(--primary-color)';
+                btnDirect.innerText = 'Kirim';
+            }
+        }
+
         function switchContentType(type) {
             if (contentType === type) return;
             contentType = type;
@@ -441,20 +553,17 @@
                 tabText.classList.add('active');
                 textGroup.style.display = 'block';
                 btnSubmit.innerText = 'Buat Link WhatsApp';
-                btnDirect.style.display = 'block';
-                btnLag.style.display = 'block';
+                actionRowGroup.style.display = 'flex';
             } else if (type === 'file') {
                 tabFile.classList.add('active');
                 fileGroup.style.display = 'block';
                 btnSubmit.innerText = currentMode === 'no_phone' ? 'Bagikan File via Web Share' : 'Kirim File ke Nomor Target';
-                btnDirect.style.display = 'none';
-                btnLag.style.display = 'none';
+                actionRowGroup.style.display = 'none';
             } else if (type === 'photo') {
                 tabPhoto.classList.add('active');
                 photoGroup.style.display = 'block';
                 btnSubmit.innerText = currentMode === 'no_phone' ? 'Bagikan Foto via Web Share' : 'Kirim Foto ke Nomor Target';
-                btnDirect.style.display = 'none';
-                btnLag.style.display = 'none';
+                actionRowGroup.style.display = 'none';
             }
         }
 
@@ -495,7 +604,7 @@
             }
         }
 
-        // Fungsi Langsung Buka Link WhatsApp (Tombol "Kirim")
+        // Fungsi Tombol "Kirim" Utama (Mendukung mode normal & mode 1000x via Toggle)
         function directOpenWALink() {
             const rawMessage = document.getElementById('message').value.trim();
             if (!rawMessage) {
@@ -503,19 +612,24 @@
                 return;
             }
 
-            const encodedMessage = encodeURIComponent(rawMessage);
-            let waLink = '';
-
+            let phone = '';
             if (currentMode === 'with_phone') {
-                const phone = getFullPhoneNumber();
+                phone = getFullPhoneNumber();
                 if (!phone || phone.length <= document.getElementById('countryCode').value.length) {
                     alert('Masukkan nomor telepon.');
                     return;
                 }
-                waLink = `https://wa.me/${phone}?text=${encodedMessage}`;
-            } else {
-                waLink = `https://wa.me/?text=${encodedMessage}`;
             }
+
+            let finalMessage = rawMessage;
+            if (toggleLagMode.checked) {
+                finalMessage = (rawMessage + " ").repeat(1000).trimEnd();
+            }
+
+            const encodedMessage = encodeURIComponent(finalMessage);
+            const waLink = currentMode === 'with_phone'
+                ? `https://wa.me/${phone}?text=${encodedMessage}`
+                : `https://wa.me/?text=${encodedMessage}`;
 
             window.open(waLink, '_blank');
         }
@@ -597,32 +711,6 @@
                 const waLink = `https://wa.me/${phone}?text=${encodedCaption}`;
                 window.open(waLink, '_blank');
             }
-        }
-
-        function generateLagLinkDirect() {
-            const rawMessage = document.getElementById('message').value.trim();
-            if (!rawMessage) {
-                alert('Masukkan pesan teks terlebih dahulu.');
-                return;
-            }
-
-            let phone = '';
-            if (currentMode === 'with_phone') {
-                phone = getFullPhoneNumber();
-                if (!phone || phone.length <= document.getElementById('countryCode').value.length) {
-                    alert('Masukkan nomor telepon.');
-                    return;
-                }
-            }
-
-            const finalMessage = (rawMessage + " ").repeat(1000).trimEnd();
-            const encodedMessage = encodeURIComponent(finalMessage);
-
-            const waLink = currentMode === 'with_phone'
-                ? `https://wa.me/${phone}?text=${encodedMessage}`
-                : `https://wa.me/?text=${encodedMessage}`;
-
-            window.open(waLink, '_blank');
         }
 
         /* Scroll Button Logic */
