@@ -25,14 +25,17 @@
             color: var(--text-main);
             max-width: 520px;
             margin: 40px auto;
-            padding: 0 20px 80px 20px;
+            padding: 0 15px 80px 15px;
+            box-sizing: border-box;
         }
 
         .container {
             background: var(--card-bg);
-            padding: 25px;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box;
+            width: 100%;
         }
 
         h2 {
@@ -50,7 +53,7 @@
             font-size: 14px;
         }
 
-        /* Type Switcher Tabs */
+        /* Type Switcher Tabs - Transisi dihapus agar UI perpindahan instan/cepat */
         .type-container {
             display: flex;
             gap: 8px;
@@ -61,7 +64,7 @@
 
         .type-btn {
             flex: 1;
-            padding: 10px;
+            padding: 10px 5px;
             background: #f0f2f5;
             color: var(--text-muted);
             border: 1px solid var(--border-color);
@@ -70,7 +73,6 @@
             font-weight: 600;
             font-size: 13px;
             text-align: center;
-            transition: all 0.2s ease;
         }
 
         .type-btn.active {
@@ -88,7 +90,7 @@
 
         .mode-btn {
             flex: 1;
-            padding: 10px;
+            padding: 10px 5px;
             background: #e4e6eb;
             color: var(--text-main);
             border: 1px solid transparent;
@@ -97,7 +99,6 @@
             font-weight: 600;
             font-size: 13px;
             text-align: center;
-            transition: all 0.2s ease;
         }
 
         .mode-btn.active {
@@ -105,25 +106,30 @@
             color: #ffffff;
         }
 
-        /* Group Input Kode Negara + Nomor */
+        /* Fix Responsif Mobile pada Input Nomor */
         .phone-input-container {
             display: flex;
             gap: 8px;
             margin-bottom: 15px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .country-code-select {
-            width: 150px;
-            padding: 10px 8px;
+            width: 130px;
+            max-width: 40%;
+            padding: 10px 6px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13px;
             font-family: inherit;
             background-color: #fafafa;
+            box-sizing: border-box;
         }
 
         .phone-input-field {
             flex: 1;
+            min-width: 0;
             padding: 10px 12px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -153,6 +159,7 @@
             resize: vertical;
         }
 
+        /* Styling Tombol-tombol Utama */
         button.btn-submit {
             width: 100%;
             padding: 12px;
@@ -163,11 +170,27 @@
             cursor: pointer;
             font-weight: 600;
             font-size: 15px;
-            transition: background 0.2s ease;
         }
 
         button.btn-submit:hover {
             background: var(--accent-hover);
+        }
+
+        button.btn-direct {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            margin-top: 10px;
+        }
+
+        button.btn-direct:hover {
+            background: var(--primary-hover);
         }
 
         button.btn-lag {
@@ -181,7 +204,6 @@
             font-weight: 600;
             font-size: 15px;
             margin-top: 10px;
-            transition: background 0.2s ease;
         }
 
         button.btn-lag:hover {
@@ -194,6 +216,7 @@
             border: 1px dashed var(--border-color);
             border-radius: 6px;
             margin-bottom: 15px;
+            box-sizing: border-box;
         }
 
         .result {
@@ -261,7 +284,6 @@
             justify-content: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease, background-color 0.3s ease;
             z-index: 1000;
         }
 
@@ -328,6 +350,9 @@
         <!-- Tombol Aksi Utama -->
         <button id="btnSubmitMain" class="btn-submit" onclick="handleAction(1)">Buat Link WhatsApp</button>
         
+        <!-- Tombol Kirim Langsung -->
+        <button id="btnDirectSend" class="btn-direct" onclick="directOpenWALink()">Kirim</button>
+
         <!-- Tombol Mode Lag -->
         <button id="btnLagMain" class="btn-lag" onclick="generateLagLinkDirect()">Kirim 1000x</button>
 
@@ -370,17 +395,27 @@
         let currentMode = 'with_phone';
         let contentType = 'text';
 
-        // Helper untuk memformat dan mengambil nomor telepon lengkap
+        // Element Caching untuk Operasi UI Instan
+        const tabText = document.getElementById('tabText');
+        const tabFile = document.getElementById('tabFile');
+        const tabPhoto = document.getElementById('tabPhoto');
+
+        const textGroup = document.getElementById('textContentGroup');
+        const fileGroup = document.getElementById('fileContentGroup');
+        const photoGroup = document.getElementById('photoContentGroup');
+        
+        const btnSubmit = document.getElementById('btnSubmitMain');
+        const btnDirect = document.getElementById('btnDirectSend');
+        const btnLag = document.getElementById('btnLagMain');
+        const resultArea = document.getElementById('resultArea');
+
         function getFullPhoneNumber() {
             const countryCode = document.getElementById('countryCode').value;
             let rawPhone = document.getElementById('phone').value.trim();
 
             if (!rawPhone) return '';
-
-            // Hapus karakter non-digit jika ada
             rawPhone = rawPhone.replace(/\D/g, '');
 
-            // Jika pengguna mengetik '0' di awal (misal 0812...), hapus '0'-nya
             if (rawPhone.startsWith('0')) {
                 rawPhone = rawPhone.substring(1);
             }
@@ -388,45 +423,48 @@
             return countryCode + rawPhone;
         }
 
+        // Fungsi Perpindahan Tab (Optimasi Instan)
         function switchContentType(type) {
+            if (contentType === type) return;
             contentType = type;
 
-            document.getElementById('tabText').classList.remove('active');
-            document.getElementById('tabFile').classList.remove('active');
-            document.getElementById('tabPhoto').classList.remove('active');
+            tabText.classList.remove('active');
+            tabFile.classList.remove('active');
+            tabPhoto.classList.remove('active');
 
-            document.getElementById('textContentGroup').style.display = 'none';
-            document.getElementById('fileContentGroup').style.display = 'none';
-            document.getElementById('photoContentGroup').style.display = 'none';
-            document.getElementById('resultArea').style.display = 'none';
-
-            const btnSubmit = document.getElementById('btnSubmitMain');
-            const btnLag = document.getElementById('btnLagMain');
+            textGroup.style.display = 'none';
+            fileGroup.style.display = 'none';
+            photoGroup.style.display = 'none';
+            resultArea.style.display = 'none';
 
             if (type === 'text') {
-                document.getElementById('tabText').classList.add('active');
-                document.getElementById('textContentGroup').style.display = 'block';
+                tabText.classList.add('active');
+                textGroup.style.display = 'block';
                 btnSubmit.innerText = 'Buat Link WhatsApp';
+                btnDirect.style.display = 'block';
                 btnLag.style.display = 'block';
             } else if (type === 'file') {
-                document.getElementById('tabFile').classList.add('active');
-                document.getElementById('fileContentGroup').style.display = 'block';
+                tabFile.classList.add('active');
+                fileGroup.style.display = 'block';
                 btnSubmit.innerText = currentMode === 'no_phone' ? 'Bagikan File via Web Share' : 'Kirim File ke Nomor Target';
+                btnDirect.style.display = 'none';
                 btnLag.style.display = 'none';
             } else if (type === 'photo') {
-                document.getElementById('tabPhoto').classList.add('active');
-                document.getElementById('photoContentGroup').style.display = 'block';
+                tabPhoto.classList.add('active');
+                photoGroup.style.display = 'block';
                 btnSubmit.innerText = currentMode === 'no_phone' ? 'Bagikan Foto via Web Share' : 'Kirim Foto ke Nomor Target';
+                btnDirect.style.display = 'none';
                 btnLag.style.display = 'none';
             }
         }
 
         function switchMode(mode) {
+            if (currentMode === mode) return;
             currentMode = mode;
+
             const phoneGroup = document.getElementById('phoneGroup');
             const btnWithPhone = document.getElementById('modeWithPhone');
             const btnNoPhone = document.getElementById('modeNoPhone');
-            const btnSubmit = document.getElementById('btnSubmitMain');
 
             if (mode === 'with_phone') {
                 phoneGroup.style.display = 'block';
@@ -444,7 +482,7 @@
                 btnSubmit.innerText = mode === 'no_phone' ? 'Bagikan Foto via Web Share' : 'Kirim Foto ke Nomor Target';
             }
 
-            document.getElementById('resultArea').style.display = 'none';
+            resultArea.style.display = 'none';
         }
 
         function handleAction(multiplier = 1) {
@@ -455,6 +493,31 @@
             } else if (contentType === 'photo') {
                 processMediaShare('photoInput', 'photoCaption');
             }
+        }
+
+        // Fungsi Langsung Buka Link WhatsApp (Tombol "Kirim")
+        function directOpenWALink() {
+            const rawMessage = document.getElementById('message').value.trim();
+            if (!rawMessage) {
+                alert('Masukkan pesan teks terlebih dahulu.');
+                return;
+            }
+
+            const encodedMessage = encodeURIComponent(rawMessage);
+            let waLink = '';
+
+            if (currentMode === 'with_phone') {
+                const phone = getFullPhoneNumber();
+                if (!phone || phone.length <= document.getElementById('countryCode').value.length) {
+                    alert('Masukkan nomor telepon.');
+                    return;
+                }
+                waLink = `https://wa.me/${phone}?text=${encodedMessage}`;
+            } else {
+                waLink = `https://wa.me/?text=${encodedMessage}`;
+            }
+
+            window.open(waLink, '_blank');
         }
 
         function generateWALink(multiplier = 1) {
@@ -485,7 +548,7 @@
 
             document.getElementById('linkOutput').innerText = waLink;
             document.getElementById('testLink').href = waLink;
-            document.getElementById('resultArea').style.display = 'block';
+            resultArea.style.display = 'block';
         }
 
         async function processMediaShare(inputId, captionId) {
