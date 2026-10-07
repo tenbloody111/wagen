@@ -3,73 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator Link WA - Multi Mode</title>
+    <title>WhatsApp Link & Media Share Generator</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 20px 80px 20px; }
-        
-        /* Mode Switcher Tabs */
-        .mode-container { display: flex; gap: 10px; margin-bottom: 20px; }
-        .mode-btn { 
-            flex: 1; 
-            padding: 10px; 
-            background: #e0e0e0; 
-            color: #333; 
-            border: 2px solid transparent; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: bold; 
+        :root {
+            --primary-color: #075e54;
+            --primary-hover: #128c7e;
+            --accent-color: #25d366;
+            --accent-hover: #20ba5a;
+            --danger-color: #d9534f;
+            --danger-hover: #c9302c;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border-color: #cccccc;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            max-width: 520px;
+            margin: 40px auto;
+            padding: 0 20px 80px 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 22px;
+            color: var(--primary-color);
             text-align: center;
-            transition: all 0.3s ease;
-        }
-        .mode-btn.active { 
-            background: #075e54; 
-            color: white; 
-            border-color: #128c7e; 
         }
 
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        
-        /* Style Tombol Utama & Tombol Lag */
-        button.btn-submit { width: 100%; padding: 12px; background: #25D366; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; }
-        button.btn-submit:hover { background: #20ba5a; }
-
-        button.btn-lag { 
-            width: 100%; 
-            padding: 12px; 
-            background: #e74c3c; 
-            color: white; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 15px; 
-            margin-top: 10px; 
-            transition: background 0.3s ease;
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
         }
-        button.btn-lag:hover { background: #c0392b; }
 
-        .result { margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 4px; word-break: break-all; }
-        a { color: #075e54; font-weight: bold; }
+        /* Type Switcher Tabs */
+        .type-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 12px;
+        }
 
-        /* Style untuk tombol Opsi Biasa & 2x */
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-opt { flex: 1; padding: 10px; background: #075e54; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; }
-        .btn-opt:hover { background: #128c7e; }
+        .type-btn {
+            flex: 1;
+            padding: 10px;
+            background: #f0f2f5;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
 
-        /* Tombol Floating Single-Position (Pojok Kanan Bawah) */
+        .type-btn.active {
+            background: var(--primary-color);
+            color: #ffffff;
+            border-color: var(--primary-color);
+        }
+
+        /* Mode Switcher Tabs */
+        .mode-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            background: #e4e6eb;
+            color: var(--text-main);
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn.active {
+            background: var(--primary-hover);
+            color: #ffffff;
+        }
+
+        input[type="number"],
+        input[type="file"],
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input[type="file"] {
+            background: #fafafa;
+            padding: 8px;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        button.btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: background 0.2s ease;
+        }
+
+        button.btn-submit:hover {
+            background: var(--accent-hover);
+        }
+
+        button.btn-lag {
+            width: 100%;
+            padding: 12px;
+            background: var(--danger-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            margin-top: 10px;
+            transition: background 0.2s ease;
+        }
+
+        button.btn-lag:hover {
+            background: var(--danger-hover);
+        }
+
+        .file-input-group {
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f4f8;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        .result p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        a {
+            color: var(--primary-color);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-opt {
+            flex: 1;
+            padding: 10px;
+            background: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .btn-opt:hover {
+            background: var(--primary-hover);
+        }
+
         .scroll-btn {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 45px;
-            height: 45px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
-            background-color: #075e54;
-            color: white;
+            background-color: var(--primary-color);
+            color: #ffffff;
             border: none;
-            font-size: 22px;
+            font-size: 18px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -78,59 +238,126 @@
             transition: opacity 0.3s ease, background-color 0.3s ease;
             z-index: 1000;
         }
-        .scroll-btn:hover { background-color: #128c7e; }
+
+        .scroll-btn:hover {
+            background-color: var(--primary-hover);
+        }
     </style>
 </head>
 <body>
 
-    <h2>WhatsApp Link Generator</h2>
-    
-    <!-- Pilih Mode Pengiriman -->
-    <label><strong>Pilih Mode Pengiriman:</strong></label>
-    <div class="mode-container">
-        <button id="modeWithPhone" class="mode-btn active" onclick="switchMode('with_phone')">Dengan Nomor</button>
-        <button id="modeNoPhone" class="mode-btn" onclick="switchMode('no_phone')">Tanpa Nomor</button>
-    </div>
+    <div class="container">
+        <h2>WhatsApp Generator</h2>
 
-    <!-- Input Nomor Telepon -->
-    <div id="phoneGroup">
-        <label>Nomor WhatsApp (dengan kode negara tanpa +):</label>
-        <input type="number" id="phone" value="62821782920" placeholder="Contoh: 628123456789">
-    </div>
+        <!-- Tipe Konten -->
+        <label>Tipe Konten:</label>
+        <div class="type-container">
+            <button id="tabText" class="type-btn active" onclick="switchContentType('text')">Pesan Teks</button>
+            <button id="tabFile" class="type-btn" onclick="switchContentType('file')">Dokumen File</button>
+            <button id="tabPhoto" class="type-btn" onclick="switchContentType('photo')">Foto / Gambar</button>
+        </div>
 
-    <!-- Input Pesan -->
-    <label>Pesan Teks Biasa:</label>
-    <textarea id="message" rows="8" placeholder="Tulis pesan biasa di sini..."></textarea>
+        <!-- Mode Pengiriman (Tersedia untuk semua tipe konten) -->
+        <div id="modeSelectionGroup">
+            <label>Mode Pengiriman:</label>
+            <div class="mode-container">
+                <button id="modeWithPhone" class="mode-btn active" onclick="switchMode('with_phone')">Dengan Nomor</button>
+                <button id="modeNoPhone" class="mode-btn" onclick="switchMode('no_phone')">Tanpa Nomor</button>
+            </div>
+        </div>
 
-    <!-- Tombol Buat Link WA -->
-    <button class="btn-submit" onclick="generateWALink(1)">Buat Link WA</button>
-    
-    <!-- Tombol Lag Teroptimasi -->
-    <button class="btn-lag" onclick="generateLagLinkDirect()">Lag (1000x Direct Open)</button>
+        <!-- Input Nomor Telepon -->
+        <div id="phoneGroup">
+            <label for="phone">Nomor WhatsApp (Kode Negara Tanpa Simbol +):</label>
+            <input type="number" id="phone" value="62821782920" placeholder="Contoh: 628123456789">
+        </div>
 
-    <div class="result" id="resultArea" style="display:none;">
-        <p><strong>Link Hasil:</strong></p>
-        <p id="linkOutput"></p>
-        <a id="testLink" href="#" target="_blank">Coba Buka Link</a>
+        <!-- Form Pesan Teks -->
+        <div id="textContentGroup">
+            <label for="message">Pesan Teks:</label>
+            <textarea id="message" rows="6" placeholder="Tuliskan pesan teks di sini..."></textarea>
+        </div>
 
-        <!-- Tombol Tambahan Biasa & 2x -->
-        <div class="btn-group">
-            <button class="btn-opt" onclick="generateWALink(1)">Biasa</button>
-            <button class="btn-opt" onclick="generateWALink(2)">2x</button>
+        <!-- Form File -->
+        <div id="fileContentGroup" class="file-input-group" style="display: none;">
+            <label for="fileInput">Pilih File (PDF, Dokumen, Zip):</label>
+            <input type="file" id="fileInput" accept="*/*">
+            <label for="fileCaption">Keterangan Tambahan (Opsional):</label>
+            <textarea id="fileCaption" rows="3" placeholder="Tuliskan keterangan file..."></textarea>
+        </div>
+
+        <!-- Form Foto -->
+        <div id="photoContentGroup" class="file-input-group" style="display: none;">
+            <label for="photoInput">Pilih Foto / Gambar:</label>
+            <input type="file" id="photoInput" accept="image/*">
+            <label for="photoCaption">Keterangan Foto (Opsional):</label>
+            <textarea id="photoCaption" rows="3" placeholder="Tuliskan keterangan foto..."></textarea>
+        </div>
+
+        <!-- Tombol Aksi Utama -->
+        <button id="btnSubmitMain" class="btn-submit" onclick="handleAction(1)">Buat Link WhatsApp</button>
+        
+        <!-- Tombol Mode Lag -->
+        <button id="btnLagMain" class="btn-lag" onclick="generateLagLinkDirect()">Kirim 1000x</button>
+
+        <div class="result" id="resultArea" style="display:none;">
+            <p><strong>Hasil Link:</strong></p>
+            <p id="linkOutput"></p>
+            <a id="testLink" href="#" target="_blank">Buka Link WhatsApp</a>
+
+            <div class="btn-group">
+                <button class="btn-opt" onclick="handleAction(1)">Standar</button>
+                <button class="btn-opt" onclick="handleAction(2)">Ganda (2x)</button>
+            </div>
         </div>
     </div>
 
-    <!-- Tombol Floating Dynamic Scroll -->
-    <button id="dynamicScrollBtn" class="scroll-btn" title="Scroll">↑</button>
+    <!-- Tombol Navigasi Scroll -->
+    <button id="dynamicScrollBtn" class="scroll-btn" title="Scroll">&uarr;</button>
 
     <script>
         let currentMode = 'with_phone';
+        let contentType = 'text';
+
+        function switchContentType(type) {
+            contentType = type;
+
+            document.getElementById('tabText').classList.remove('active');
+            document.getElementById('tabFile').classList.remove('active');
+            document.getElementById('tabPhoto').classList.remove('active');
+
+            document.getElementById('textContentGroup').style.display = 'none';
+            document.getElementById('fileContentGroup').style.display = 'none';
+            document.getElementById('photoContentGroup').style.display = 'none';
+            document.getElementById('resultArea').style.display = 'none';
+
+            const btnSubmit = document.getElementById('btnSubmitMain');
+            const btnLag = document.getElementById('btnLagMain');
+
+            if (type === 'text') {
+                document.getElementById('tabText').classList.add('active');
+                document.getElementById('textContentGroup').style.display = 'block';
+                btnSubmit.innerText = 'Buat Link WhatsApp';
+                btnLag.style.display = 'block';
+            } else if (type === 'file') {
+                document.getElementById('tabFile').classList.add('active');
+                document.getElementById('fileContentGroup').style.display = 'block';
+                btnSubmit.innerText = currentMode === 'no_phone' ? 'Bagikan File via Web Share' : 'Kirim File ke Nomor Target';
+                btnLag.style.display = 'none';
+            } else if (type === 'photo') {
+                document.getElementById('tabPhoto').classList.add('active');
+                document.getElementById('photoContentGroup').style.display = 'block';
+                btnSubmit.innerText = currentMode === 'no_phone' ? 'Bagikan Foto via Web Share' : 'Kirim Foto ke Nomor Target';
+                btnLag.style.display = 'none';
+            }
+        }
 
         function switchMode(mode) {
             currentMode = mode;
             const phoneGroup = document.getElementById('phoneGroup');
             const btnWithPhone = document.getElementById('modeWithPhone');
             const btnNoPhone = document.getElementById('modeNoPhone');
+            const btnSubmit = document.getElementById('btnSubmitMain');
 
             if (mode === 'with_phone') {
                 phoneGroup.style.display = 'block';
@@ -142,15 +369,29 @@
                 btnWithPhone.classList.remove('active');
             }
 
+            if (contentType === 'file') {
+                btnSubmit.innerText = mode === 'no_phone' ? 'Bagikan File via Web Share' : 'Kirim File ke Nomor Target';
+            } else if (contentType === 'photo') {
+                btnSubmit.innerText = mode === 'no_phone' ? 'Bagikan Foto via Web Share' : 'Kirim Foto ke Nomor Target';
+            }
+
             document.getElementById('resultArea').style.display = 'none';
         }
 
-        // Fungsi Pembuatan Link Normal (1x / 2x)
+        function handleAction(multiplier = 1) {
+            if (contentType === 'text') {
+                generateWALink(multiplier);
+            } else if (contentType === 'file') {
+                processMediaShare('fileInput', 'fileCaption');
+            } else if (contentType === 'photo') {
+                processMediaShare('photoInput', 'photoCaption');
+            }
+        }
+
         function generateWALink(multiplier = 1) {
             const rawMessage = document.getElementById('message').value.trim();
-            
             if (!rawMessage) {
-                alert('Silakan masukkan pesan teks terlebih dahulu!');
+                alert('Masukkan pesan teks terlebih dahulu.');
                 return;
             }
 
@@ -165,7 +406,7 @@
             if (currentMode === 'with_phone') {
                 const phone = document.getElementById('phone').value.trim();
                 if (!phone) {
-                    alert('Silakan masukkan nomor telepon!');
+                    alert('Masukkan nomor telepon.');
                     return;
                 }
                 waLink = `https://wa.me/${phone}?text=${encodedMessage}`;
@@ -178,12 +419,61 @@
             document.getElementById('resultArea').style.display = 'block';
         }
 
-        // Fungsi Khusus Mode Lag (Teroptimasi Tanpa Render DOM)
+        async function processMediaShare(inputId, captionId) {
+            const inputElem = document.getElementById(inputId);
+            const caption = document.getElementById(captionId).value.trim();
+
+            if (!inputElem.files || inputElem.files.length === 0) {
+                alert('Pilih file terlebih dahulu.');
+                return;
+            }
+
+            const file = inputElem.files[0];
+
+            if (currentMode === 'no_phone') {
+                // Mode Tanpa Nomor: Menggunakan Web Share API
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: file.name,
+                            text: caption || ''
+                        });
+                    } catch (error) {
+                        if (error.name !== 'AbortError') {
+                            alert('Terjadi kesalahan saat membagikan media.');
+                        }
+                    }
+                } else {
+                    alert('Browser atau perangkat Anda tidak mendukung fitur Web Share secara langsung.');
+                }
+            } else {
+                // Mode Dengan Nomor: Salin File ke Clipboard & Buka WhatsApp Chat
+                const phone = document.getElementById('phone').value.trim();
+                if (!phone) {
+                    alert('Masukkan nomor telepon target.');
+                    return;
+                }
+
+                try {
+                    // Menyalin file ke clipboard
+                    const data = [new ClipboardItem({ [file.type]: file })];
+                    await navigator.clipboard.write(data);
+                    alert('File berhasil disalin ke clipboard! Tempel (paste) file di kolom chat WhatsApp yang akan terbuka.');
+                } catch (err) {
+                    alert('Lampiran file otomatis disiapkan. Silakan lampirkan file secara manual jika clipboard tidak didukung oleh browser Anda.');
+                }
+
+                const encodedCaption = encodeURIComponent(caption ? caption : `[Mengirimkan Lampiran: ${file.name}]`);
+                const waLink = `https://wa.me/${phone}?text=${encodedCaption}`;
+                window.open(waLink, '_blank');
+            }
+        }
+
         function generateLagLinkDirect() {
             const rawMessage = document.getElementById('message').value.trim();
-            
             if (!rawMessage) {
-                alert('Silakan masukkan pesan teks terlebih dahulu!');
+                alert('Masukkan pesan teks terlebih dahulu.');
                 return;
             }
 
@@ -191,12 +481,11 @@
             if (currentMode === 'with_phone') {
                 phone = document.getElementById('phone').value.trim();
                 if (!phone) {
-                    alert('Silakan masukkan nomor telepon!');
+                    alert('Masukkan nomor telepon.');
                     return;
                 }
             }
 
-            // Gunakan .repeat() untuk pengolahan string instan & efisien di memori
             const finalMessage = (rawMessage + " ").repeat(1000).trimEnd();
             const encodedMessage = encodeURIComponent(finalMessage);
 
@@ -204,11 +493,10 @@
                 ? `https://wa.me/${phone}?text=${encodedMessage}`
                 : `https://wa.me/?text=${encodedMessage}`;
 
-            // Langsung buka link tanpa menyentuh DOM/layar agar browser tidak freeze
             window.open(waLink, '_blank');
         }
 
-        // Logika Floating Scroll Button
+        /* Scroll Button Logic */
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -231,18 +519,16 @@
 
             if (currentScrollY > lastScrollY) {
                 if (!isAtBottom) {
-                    scrollBtn.innerText = '↓';
+                    scrollBtn.innerHTML = '&darr;';
                     scrollBtn.onclick = scrollToBottom;
-                    scrollBtn.title = 'Ke Paling Bawah';
                     showBtn(scrollBtn);
                 } else {
                     hideBtn(scrollBtn);
                 }
             } else if (currentScrollY < lastScrollY) {
                 if (!isAtTop) {
-                    scrollBtn.innerText = '↑';
+                    scrollBtn.innerHTML = '&uarr;';
                     scrollBtn.onclick = scrollToTop;
-                    scrollBtn.title = 'Ke Paling Atas';
                     showBtn(scrollBtn);
                 } else {
                     hideBtn(scrollBtn);
@@ -269,6 +555,5 @@
 
         window.addEventListener('scroll', handleScroll);
     </script>
-
 </body>
 </html>
