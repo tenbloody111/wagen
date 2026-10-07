@@ -157,7 +157,6 @@
             resize: vertical;
         }
 
-        /* Container Tombol Kirim & Pengaturan */
         .action-row {
             display: flex;
             gap: 8px;
@@ -217,7 +216,6 @@
             background: var(--accent-hover);
         }
 
-        /* Menu Dropdown Pengaturan */
         .settings-dropdown {
             display: none;
             position: absolute;
@@ -242,7 +240,6 @@
             color: var(--text-main);
         }
 
-        /* Styling Toggle Switch */
         .switch {
             position: relative;
             display: inline-block;
@@ -380,7 +377,7 @@
             <button id="tabPhoto" class="type-btn" onclick="switchContentType('photo')">Foto / Gambar</button>
         </div>
 
-        <!-- Mode Pengiriman -->
+        <!-- Mode Pengiriman (Hanya untuk Pesan Teks) -->
         <div id="modeSelectionGroup">
             <label>Mode Pengiriman:</label>
             <div class="mode-container">
@@ -439,7 +436,7 @@
             </div>
         </div>
 
-        <!-- Tombol Aksi Utama (Buat Link) -->
+        <!-- Tombol Aksi Utama -->
         <button id="btnSubmitMain" class="btn-submit" onclick="handleAction(1)">Buat Link WhatsApp</button>
 
         <div class="result" id="resultArea" style="display:none;">
@@ -486,6 +483,9 @@
         const tabFile = document.getElementById('tabFile');
         const tabPhoto = document.getElementById('tabPhoto');
 
+        const modeSelectionGroup = document.getElementById('modeSelectionGroup');
+        const phoneGroup = document.getElementById('phoneGroup');
+
         const textGroup = document.getElementById('textContentGroup');
         const fileGroup = document.getElementById('fileContentGroup');
         const photoGroup = document.getElementById('photoContentGroup');
@@ -511,21 +511,18 @@
             return countryCode + rawPhone;
         }
 
-        // Toggle Tampilan Dropdown Pengaturan
         function toggleSettingsMenu(event) {
             event.stopPropagation();
             const isVisible = settingsDropdown.style.display === 'block';
             settingsDropdown.style.display = isVisible ? 'none' : 'block';
         }
 
-        // Tutup menu saat mengklik di luar area pengaturan
         document.addEventListener('click', function(e) {
             if (!settingsDropdown.contains(e.target) && e.target.id !== 'btnSettingsToggle') {
                 settingsDropdown.style.display = 'none';
             }
         });
 
-        // Handler Perubahan Toggle Kirim 1000x
         function onLagToggleChange() {
             if (toggleLagMode.checked) {
                 btnDirect.style.backgroundColor = 'var(--danger-color)';
@@ -552,43 +549,47 @@
             if (type === 'text') {
                 tabText.classList.add('active');
                 textGroup.style.display = 'block';
+                modeSelectionGroup.style.display = 'block';
+                
+                // Kembalikan ke mode pengiriman yang dipilih sebelumnya
+                switchMode(currentMode);
+
                 btnSubmit.innerText = 'Buat Link WhatsApp';
                 actionRowGroup.style.display = 'flex';
-            } else if (type === 'file') {
-                tabFile.classList.add('active');
-                fileGroup.style.display = 'block';
-                btnSubmit.innerText = currentMode === 'no_phone' ? 'Bagikan File via Web Share' : 'Kirim File ke Nomor Target';
-                actionRowGroup.style.display = 'none';
-            } else if (type === 'photo') {
-                tabPhoto.classList.add('active');
-                photoGroup.style.display = 'block';
-                btnSubmit.innerText = currentMode === 'no_phone' ? 'Bagikan Foto via Web Share' : 'Kirim Foto ke Nomor Target';
+            } else {
+                // Untuk Tab File dan Foto
+                if (type === 'file') {
+                    tabFile.classList.add('active');
+                    fileGroup.style.display = 'block';
+                    btnSubmit.innerText = 'Bagikan File via Web Share';
+                } else if (type === 'photo') {
+                    tabPhoto.classList.add('active');
+                    photoGroup.style.display = 'block';
+                    btnSubmit.innerText = 'Bagikan Foto via Web Share';
+                }
+
+                // Sembunyikan opsi mode pengiriman & input nomor, lalu set mode default ke 'no_phone'
+                modeSelectionGroup.style.display = 'none';
+                phoneGroup.style.display = 'none';
                 actionRowGroup.style.display = 'none';
             }
         }
 
         function switchMode(mode) {
-            if (currentMode === mode) return;
             currentMode = mode;
-
-            const phoneGroup = document.getElementById('phoneGroup');
             const btnWithPhone = document.getElementById('modeWithPhone');
             const btnNoPhone = document.getElementById('modeNoPhone');
 
-            if (mode === 'with_phone') {
-                phoneGroup.style.display = 'block';
-                btnWithPhone.classList.add('active');
-                btnNoPhone.classList.remove('active');
-            } else {
-                phoneGroup.style.display = 'none';
-                btnNoPhone.classList.add('active');
-                btnWithPhone.classList.remove('active');
-            }
-
-            if (contentType === 'file') {
-                btnSubmit.innerText = mode === 'no_phone' ? 'Bagikan File via Web Share' : 'Kirim File ke Nomor Target';
-            } else if (contentType === 'photo') {
-                btnSubmit.innerText = mode === 'no_phone' ? 'Bagikan Foto via Web Share' : 'Kirim Foto ke Nomor Target';
+            if (contentType === 'text') {
+                if (mode === 'with_phone') {
+                    phoneGroup.style.display = 'block';
+                    btnWithPhone.classList.add('active');
+                    btnNoPhone.classList.remove('active');
+                } else {
+                    phoneGroup.style.display = 'none';
+                    btnNoPhone.classList.add('active');
+                    btnWithPhone.classList.remove('active');
+                }
             }
 
             resultArea.style.display = 'none';
@@ -604,7 +605,6 @@
             }
         }
 
-        // Fungsi Tombol "Kirim" Utama (Mendukung mode normal & mode 1000x via Toggle)
         function directOpenWALink() {
             const rawMessage = document.getElementById('message').value.trim();
             if (!rawMessage) {
@@ -676,40 +676,21 @@
 
             const file = inputElem.files[0];
 
-            if (currentMode === 'no_phone') {
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: file.name,
-                            text: caption || ''
-                        });
-                    } catch (error) {
-                        if (error.name !== 'AbortError') {
-                            alert('Terjadi kesalahan saat membagikan media.');
-                        }
+            // Mode pengiriman untuk media selalu menggunakan Web Share (Tanpa Nomor)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: file.name,
+                        text: caption || ''
+                    });
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        alert('Terjadi kesalahan saat membagikan media.');
                     }
-                } else {
-                    alert('Browser atau perangkat Anda tidak mendukung fitur Web Share secara langsung.');
                 }
             } else {
-                const phone = getFullPhoneNumber();
-                if (!phone || phone.length <= document.getElementById('countryCode').value.length) {
-                    alert('Masukkan nomor telepon target.');
-                    return;
-                }
-
-                try {
-                    const data = [new ClipboardItem({ [file.type]: file })];
-                    await navigator.clipboard.write(data);
-                    alert('File berhasil disalin ke clipboard! Tempel (paste) file di kolom chat WhatsApp yang akan terbuka.');
-                } catch (err) {
-                    alert('Lampiran file otomatis disiapkan. Silakan lampirkan file secara manual jika clipboard tidak didukung oleh browser Anda.');
-                }
-
-                const encodedCaption = encodeURIComponent(caption ? caption : `[Mengirimkan Lampiran: ${file.name}]`);
-                const waLink = `https://wa.me/${phone}?text=${encodedCaption}`;
-                window.open(waLink, '_blank');
+                alert('Browser atau perangkat Anda tidak mendukung fitur Web Share secara langsung.');
             }
         }
 
