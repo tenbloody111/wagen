@@ -455,7 +455,7 @@
                     </label>
                 </div>
                 <div class="settings-item" id="hdToggleGroup" style="display: none;">
-                    <span>Fitur HD Foto/Video</span>
+                    <span>Fitur HD (Kirim sbg Dokumen)</span>
                     <label class="switch">
                         <input type="checkbox" id="toggleHdMedia" onchange="onHdToggleChange()">
                         <span class="slider"></span>
@@ -464,7 +464,7 @@
             </div>
         </div>
 
-        <!-- Tombol Aksi Utama (Buat Link / Share) -->
+        <!-- Tombol Aksi Utama -->
         <button id="btnSubmitMain" class="btn-submit" onclick="handleAction(1)">Buat Link WhatsApp</button>
 
         <div class="result" id="resultArea" style="display:none;">
@@ -484,7 +484,6 @@
 
     <script src="country-config.js"></script>
     <script>
-        // Isi dropdown kode negara dari konfigurasi
         (function loadCountryCodes() {
             const select = document.getElementById('countryCode');
             if (typeof COUNTRY_CONFIG === 'undefined') {
@@ -506,13 +505,9 @@
         let currentMode = 'with_phone';
         let contentType = 'text';
 
-        // Batas Maksimal File Resmi (Aturan HP/Browser Anti-Eror)
         const MAX_FILE_LIMIT = 10;
-
-        // Penyimpanan Sementara Array File yang Siap Kirim
         let preparedMediaFiles = [];
 
-        // Element Caching
         const tabText = document.getElementById('tabText');
         const tabFile = document.getElementById('tabFile');
         const tabPhoto = document.getElementById('tabPhoto');
@@ -584,27 +579,19 @@
             }
         }
 
-        // Fungsi Memproses File ke Format Kualitas HD (Menghapus Kompresi Otomatis Metadata)
+        // Fungsi Memproses File ke Mode HD Murni (MIME-Type diubah agar tidak dikompresi WhatsApp)
         function processHdFile(file, copyIndex) {
             const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
             const baseName = file.name.replace(ext, '');
             const newName = copyIndex > 0 ? `${baseName}_HD_copy${copyIndex}${ext}` : `${baseName}_HD${ext}`;
 
-            // Mengganti MIME-type agar WhatsApp membacanya sebagai Uncompressed High-Definition Document
-            let hdType = file.type;
-            if (file.type.startsWith('image/')) {
-                hdType = 'image/png'; // Paksa PNG tanpa kehilangan kualitas piksel
-            } else if (file.type.startsWith('video/')) {
-                hdType = 'video/mp4';
-            }
-
+            // Menggunakan 'application/octet-stream' memaksa WhatsApp mengirimkannya sebagai Dokumen Kualitas Asli (HD)
             return new File([file], newName, {
-                type: hdType,
+                type: 'application/octet-stream',
                 lastModified: Date.now()
             });
         }
 
-        // Menyiapkan Salinan File & Membatasi Maksimal 10 File Agar Tidak Eror
         function prepareMediaFiles(inputId, statusId) {
             const inputElem = document.getElementById(inputId);
             const statusElem = document.getElementById(statusId);
@@ -617,7 +604,6 @@
 
             let rawFiles = Array.from(inputElem.files);
 
-            // Cek jika pengguna memilih lebih dari 10 file di galeri/folder
             if (rawFiles.length > MAX_FILE_LIMIT) {
                 alert(`Batas maksimal pengiriman adalah ${MAX_FILE_LIMIT} file! Sistem telah menyesuaikan ke 10 file pertama.`);
                 rawFiles = rawFiles.slice(0, MAX_FILE_LIMIT);
@@ -628,7 +614,6 @@
 
             for (let i = 0; i < loopCount; i++) {
                 rawFiles.forEach((file) => {
-                    // Berhenti jika total salinan file sudah mencapai batas maksimal 10
                     if (preparedMediaFiles.length >= MAX_FILE_LIMIT) return;
 
                     let finalFile;
@@ -648,8 +633,7 @@
                 });
             }
 
-            // Tampilkan Indikator Status
-            const hdLabel = isHdActive ? ' [HD]' : '';
+            const hdLabel = isHdActive ? ' [HD Dokumen]' : '';
             if (rawFiles.length === 1) {
                 statusElem.innerText = `${rawFiles[0].name}${hdLabel} (${preparedMediaFiles.length})`;
             } else {
@@ -818,7 +802,6 @@
                 return;
             }
 
-            // Keamanan Tambahan: Pastikan file tidak melebihi batas 10 item saat memanggil Web Share
             const finalSendList = preparedMediaFiles.slice(0, MAX_FILE_LIMIT);
 
             if (navigator.canShare && navigator.canShare({ files: finalSendList })) {
