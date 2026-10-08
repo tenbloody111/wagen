@@ -236,7 +236,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.15);
             padding: 12px 15px;
-            width: 220px;
+            width: 240px;
             z-index: 100;
             box-sizing: border-box;
         }
@@ -248,6 +248,11 @@
             font-size: 13px;
             font-weight: 600;
             color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        .settings-item:last-child {
+            margin-bottom: 0;
         }
 
         .switch {
@@ -285,6 +290,10 @@
         }
 
         input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input#toggleLagMode:checked + .slider {
             background-color: var(--danger-color);
         }
 
@@ -415,7 +424,7 @@
 
         <!-- Form File -->
         <div id="fileContentGroup" class="file-input-group" style="display: none;">
-            <label for="fileInput">Pilih File (Bisa Pilih Lebih dari 1 File):</label>
+            <label for="fileInput">Pilih File (Maksimal 10 File):</label>
             <input type="file" id="fileInput" accept="*/*" multiple onchange="prepareMediaFiles('fileInput', 'fileStatus')">
             <span id="fileStatus" class="file-status-info"></span>
             <label for="fileCaption">Keterangan Tambahan (Opsional):</label>
@@ -424,7 +433,7 @@
 
         <!-- Form Foto / Video -->
         <div id="photoContentGroup" class="file-input-group" style="display: none;">
-            <label for="photoInput">Pilih Foto / Video (Bisa Pilih Lebih dari 1):</label>
+            <label for="photoInput">Pilih Foto / Video (Maksimal 10 Item):</label>
             <input type="file" id="photoInput" accept="image/*,video/*" multiple onchange="prepareMediaFiles('photoInput', 'photoStatus')">
             <span id="photoStatus" class="file-status-info"></span>
             <label for="photoCaption">Keterangan Foto / Video (Opsional):</label>
@@ -442,6 +451,13 @@
                     <span id="labelToggleLag">Mode Kirim 1000x</span>
                     <label class="switch">
                         <input type="checkbox" id="toggleLagMode" onchange="onLagToggleChange()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="settings-item" id="hdToggleGroup" style="display: none;">
+                    <span>Fitur HD Foto/Video</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggleHdMedia" onchange="onHdToggleChange()">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -490,6 +506,9 @@
         let currentMode = 'with_phone';
         let contentType = 'text';
 
+        // Batas Maksimal File Resmi (Aturan HP/Browser Anti-Eror)
+        const MAX_FILE_LIMIT = 10;
+
         // Penyimpanan Sementara Array File yang Siap Kirim
         let preparedMediaFiles = [];
 
@@ -511,7 +530,9 @@
         const resultArea = document.getElementById('resultArea');
         const settingsDropdown = document.getElementById('settingsDropdown');
         const toggleLagMode = document.getElementById('toggleLagMode');
+        const toggleHdMedia = document.getElementById('toggleHdMedia');
         const labelToggleLag = document.getElementById('labelToggleLag');
+        const hdToggleGroup = document.getElementById('hdToggleGroup');
 
         function getFullPhoneNumber() {
             const countryCode = document.getElementById('countryCode').value;
@@ -548,7 +569,6 @@
                 btnDirect.innerText = 'Kirim';
             }
 
-            // Re-generate file array jika berada di tab file/foto
             if (contentType === 'file') {
                 prepareMediaFiles('fileInput', 'fileStatus');
             } else if (contentType === 'photo') {
@@ -556,7 +576,35 @@
             }
         }
 
-        // Fungsi Menyiapkan Salinan File Secara Otomatis di Web Memory (Mode 10x)
+        function onHdToggleChange() {
+            if (contentType === 'file') {
+                prepareMediaFiles('fileInput', 'fileStatus');
+            } else if (contentType === 'photo') {
+                prepareMediaFiles('photoInput', 'photoStatus');
+            }
+        }
+
+        // Fungsi Memproses File ke Format Kualitas HD (Menghapus Kompresi Otomatis Metadata)
+        function processHdFile(file, copyIndex) {
+            const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
+            const baseName = file.name.replace(ext, '');
+            const newName = copyIndex > 0 ? `${baseName}_HD_copy${copyIndex}${ext}` : `${baseName}_HD${ext}`;
+
+            // Mengganti MIME-type agar WhatsApp membacanya sebagai Uncompressed High-Definition Document
+            let hdType = file.type;
+            if (file.type.startsWith('image/')) {
+                hdType = 'image/png'; // Paksa PNG tanpa kehilangan kualitas piksel
+            } else if (file.type.startsWith('video/')) {
+                hdType = 'video/mp4';
+            }
+
+            return new File([file], newName, {
+                type: hdType,
+                lastModified: Date.now()
+            });
+        }
+
+        // Menyiapkan Salinan File & Membatasi Maksimal 10 File Agar Tidak Eror
         function prepareMediaFiles(inputId, statusId) {
             const inputElem = document.getElementById(inputId);
             const statusElem = document.getElementById(statusId);
@@ -567,28 +615,45 @@
                 return;
             }
 
-            const rawFiles = Array.from(inputElem.files);
+            let rawFiles = Array.from(inputElem.files);
+
+            // Cek jika pengguna memilih lebih dari 10 file di galeri/folder
+            if (rawFiles.length > MAX_FILE_LIMIT) {
+                alert(`Batas maksimal pengiriman adalah ${MAX_FILE_LIMIT} file! Sistem telah menyesuaikan ke 10 file pertama.`);
+                rawFiles = rawFiles.slice(0, MAX_FILE_LIMIT);
+            }
+
             const loopCount = (contentType !== 'text' && toggleLagMode.checked) ? 10 : 1;
+            const isHdActive = toggleHdMedia.checked;
 
             for (let i = 0; i < loopCount; i++) {
                 rawFiles.forEach((file) => {
-                    const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
-                    const baseName = file.name.replace(ext, '');
-                    const newFileName = loopCount > 1 ? `${baseName}_copy${i + 1}${ext}` : file.name;
-                    
-                    const duplicatedFile = new File([file], newFileName, {
-                        type: file.type,
-                        lastModified: file.lastModified
-                    });
-                    preparedMediaFiles.push(duplicatedFile);
+                    // Berhenti jika total salinan file sudah mencapai batas maksimal 10
+                    if (preparedMediaFiles.length >= MAX_FILE_LIMIT) return;
+
+                    let finalFile;
+                    if (isHdActive) {
+                        finalFile = processHdFile(file, i);
+                    } else {
+                        const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
+                        const baseName = file.name.replace(ext, '');
+                        const newFileName = loopCount > 1 ? `${baseName}_copy${i + 1}${ext}` : file.name;
+                        
+                        finalFile = new File([file], newFileName, {
+                            type: file.type,
+                            lastModified: file.lastModified
+                        });
+                    }
+                    preparedMediaFiles.push(finalFile);
                 });
             }
 
-            // Indikator contoh: foto.jpg (10)
+            // Tampilkan Indikator Status
+            const hdLabel = isHdActive ? ' [HD]' : '';
             if (rawFiles.length === 1) {
-                statusElem.innerText = `${rawFiles[0].name} (${preparedMediaFiles.length})`;
+                statusElem.innerText = `${rawFiles[0].name}${hdLabel} (${preparedMediaFiles.length})`;
             } else {
-                statusElem.innerText = `${rawFiles.length} file terpilih (${preparedMediaFiles.length})`;
+                statusElem.innerText = `${rawFiles.length} item terpilih${hdLabel} (${preparedMediaFiles.length})`;
             }
         }
 
@@ -605,8 +670,8 @@
             photoGroup.style.display = 'none';
             resultArea.style.display = 'none';
 
-            // Reset Toggle saat pindah tab
             toggleLagMode.checked = false;
+            toggleHdMedia.checked = false;
             btnDirect.style.backgroundColor = 'var(--primary-color)';
             btnDirect.innerText = 'Kirim';
             preparedMediaFiles = [];
@@ -616,12 +681,14 @@
                 textGroup.style.display = 'block';
                 modeSelectionGroup.style.display = 'block';
                 labelToggleLag.innerText = 'Mode Kirim 1000x';
+                hdToggleGroup.style.display = 'none';
                 
                 switchMode(currentMode);
                 btnSubmit.innerText = 'Buat Link WhatsApp';
                 btnSubmit.style.display = 'block';
             } else {
                 labelToggleLag.innerText = 'Kirim Media 10x';
+                hdToggleGroup.style.display = 'flex';
                 
                 if (type === 'file') {
                     tabFile.classList.add('active');
@@ -751,11 +818,14 @@
                 return;
             }
 
-            if (navigator.canShare && navigator.canShare({ files: preparedMediaFiles })) {
+            // Keamanan Tambahan: Pastikan file tidak melebihi batas 10 item saat memanggil Web Share
+            const finalSendList = preparedMediaFiles.slice(0, MAX_FILE_LIMIT);
+
+            if (navigator.canShare && navigator.canShare({ files: finalSendList })) {
                 try {
                     await navigator.share({
-                        files: preparedMediaFiles,
-                        title: preparedMediaFiles.length > 1 ? `${preparedMediaFiles.length} Lampiran` : preparedMediaFiles[0].name,
+                        files: finalSendList,
+                        title: finalSendList.length > 1 ? `${finalSendList.length} Lampiran` : finalSendList[0].name,
                         text: caption || ''
                     });
                 } catch (error) {
@@ -764,7 +834,7 @@
                     }
                 }
             } else {
-                alert('Browser/HP kamu tidak mendukung pengiriman file sebanyak ini sekaligus. Coba kurangi jumlah/ukuran file.');
+                alert('Browser/HP Anda tidak mendukung pengiriman file media ini. Batasi jumlah atau ukuran file.');
             }
         }
 
