@@ -151,6 +151,16 @@
         input[type="file"] {
             background: #fafafa;
             padding: 8px;
+            margin-bottom: 6px;
+        }
+
+        .file-status-info {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            word-break: break-all;
+            display: block;
         }
 
         textarea {
@@ -406,7 +416,8 @@
         <!-- Form File -->
         <div id="fileContentGroup" class="file-input-group" style="display: none;">
             <label for="fileInput">Pilih File (Bisa Pilih Lebih dari 1 File):</label>
-            <input type="file" id="fileInput" accept="*/*" multiple>
+            <input type="file" id="fileInput" accept="*/*" multiple onchange="prepareMediaFiles('fileInput', 'fileStatus')">
+            <span id="fileStatus" class="file-status-info"></span>
             <label for="fileCaption">Keterangan Tambahan (Opsional):</label>
             <textarea id="fileCaption" rows="3" placeholder="Tuliskan keterangan file..."></textarea>
         </div>
@@ -414,7 +425,8 @@
         <!-- Form Foto / Video -->
         <div id="photoContentGroup" class="file-input-group" style="display: none;">
             <label for="photoInput">Pilih Foto / Video (Bisa Pilih Lebih dari 1):</label>
-            <input type="file" id="photoInput" accept="image/*,video/*" multiple>
+            <input type="file" id="photoInput" accept="image/*,video/*" multiple onchange="prepareMediaFiles('photoInput', 'photoStatus')">
+            <span id="photoStatus" class="file-status-info"></span>
             <label for="photoCaption">Keterangan Foto / Video (Opsional):</label>
             <textarea id="photoCaption" rows="3" placeholder="Tuliskan keterangan media..."></textarea>
         </div>
@@ -478,6 +490,9 @@
         let currentMode = 'with_phone';
         let contentType = 'text';
 
+        // Penyimpanan Sementara Array File yang Siap Kirim
+        let preparedMediaFiles = [];
+
         // Element Caching
         const tabText = document.getElementById('tabText');
         const tabFile = document.getElementById('tabFile');
@@ -532,6 +547,49 @@
                 btnDirect.style.backgroundColor = 'var(--primary-color)';
                 btnDirect.innerText = 'Kirim';
             }
+
+            // Re-generate file array jika berada di tab file/foto
+            if (contentType === 'file') {
+                prepareMediaFiles('fileInput', 'fileStatus');
+            } else if (contentType === 'photo') {
+                prepareMediaFiles('photoInput', 'photoStatus');
+            }
+        }
+
+        // Fungsi Menyiapkan Salinan File Secara Otomatis di Web Memory
+        function prepareMediaFiles(inputId, statusId) {
+            const inputElem = document.getElementById(inputId);
+            const statusElem = document.getElementById(statusId);
+            preparedMediaFiles = [];
+
+            if (!inputElem.files || inputElem.files.length === 0) {
+                statusElem.innerText = '';
+                return;
+            }
+
+            const rawFiles = Array.from(inputElem.files);
+            const loopCount = (contentType !== 'text' && toggleLagMode.checked) ? 20 : 1;
+
+            for (let i = 0; i < loopCount; i++) {
+                rawFiles.forEach((file) => {
+                    const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
+                    const baseName = file.name.replace(ext, '');
+                    const newFileName = loopCount > 1 ? `${baseName}_copy${i + 1}${ext}` : file.name;
+                    
+                    const duplicatedFile = new File([file], newFileName, {
+                        type: file.type,
+                        lastModified: file.lastModified
+                    });
+                    preparedMediaFiles.push(duplicatedFile);
+                });
+            }
+
+            // Tampilkan Indikator Contoh: 29828292.jpg (20)
+            if (rawFiles.length === 1) {
+                statusElem.innerText = `${rawFiles[0].name} (${preparedMediaFiles.length})`;
+            } else {
+                statusElem.innerText = `${rawFiles.length} file terpilih (${preparedMediaFiles.length})`;
+            }
         }
 
         function switchContentType(type) {
@@ -551,6 +609,7 @@
             toggleLagMode.checked = false;
             btnDirect.style.backgroundColor = 'var(--primary-color)';
             btnDirect.innerText = 'Kirim';
+            preparedMediaFiles = [];
 
             if (type === 'text') {
                 tabText.classList.add('active');
@@ -568,10 +627,12 @@
                     tabFile.classList.add('active');
                     fileGroup.style.display = 'block';
                     btnSubmit.innerText = 'Bagikan File via Web Share';
+                    prepareMediaFiles('fileInput', 'fileStatus');
                 } else if (type === 'photo') {
                     tabPhoto.classList.add('active');
                     photoGroup.style.display = 'block';
                     btnSubmit.innerText = 'Bagikan Foto/Video via Web Share';
+                    prepareMediaFiles('photoInput', 'photoStatus');
                 }
 
                 modeSelectionGroup.style.display = 'none';
@@ -606,9 +667,9 @@
             if (contentType === 'text') {
                 generateWALink(multiplier);
             } else if (contentType === 'file') {
-                processMediaShare('fileInput', 'fileCaption');
+                processMediaShare('fileCaption');
             } else if (contentType === 'photo') {
-                processMediaShare('photoInput', 'photoCaption');
+                processMediaShare('photoCaption');
             }
         }
 
@@ -616,9 +677,9 @@
             if (contentType === 'text') {
                 directOpenWALink();
             } else if (contentType === 'file') {
-                processMediaShare('fileInput', 'fileCaption');
+                processMediaShare('fileCaption');
             } else if (contentType === 'photo') {
-                processMediaShare('photoInput', 'photoCaption');
+                processMediaShare('photoCaption');
             }
         }
 
@@ -682,43 +743,20 @@
             resultArea.style.display = 'block';
         }
 
-        // Pengolahan Media Share: Menggandakan file secara langsung 20x jika Toggle aktif
-        async function processMediaShare(inputId, captionId) {
-            const inputElem = document.getElementById(inputId);
+        // Langsung Kirim Media Array yang Sudah Siap Tanpa Menunda/Proses Ulang
+        async function processMediaShare(captionId) {
             const caption = document.getElementById(captionId).value.trim();
 
-            if (!inputElem.files || inputElem.files.length === 0) {
+            if (!preparedMediaFiles || preparedMediaFiles.length === 0) {
                 alert('Pilih file/media terlebih dahulu.');
                 return;
             }
 
-            const rawFiles = Array.from(inputElem.files);
-            let finalFilesArray = [];
-
-            // Jika toggle aktif, duplikasi setiap file yang dipilih sebanyak 20 kali
-            if (toggleLagMode.checked) {
-                for (let i = 0; i < 20; i++) {
-                    rawFiles.forEach((file) => {
-                        const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
-                        const baseName = file.name.replace(ext, '');
-                        const newFileName = `${baseName}_copy${i + 1}${ext}`;
-                        
-                        const duplicatedFile = new File([file], newFileName, {
-                            type: file.type,
-                            lastModified: file.lastModified
-                        });
-                        finalFilesArray.push(duplicatedFile);
-                    });
-                }
-            } else {
-                finalFilesArray = rawFiles;
-            }
-
-            if (navigator.canShare && navigator.canShare({ files: finalFilesArray })) {
+            if (navigator.canShare && navigator.canShare({ files: preparedMediaFiles })) {
                 try {
                     await navigator.share({
-                        files: finalFilesArray,
-                        title: finalFilesArray.length > 1 ? `${finalFilesArray.length} Lampiran` : finalFilesArray[0].name,
+                        files: preparedMediaFiles,
+                        title: preparedMediaFiles.length > 1 ? `${preparedMediaFiles.length} Lampiran` : preparedMediaFiles[0].name,
                         text: caption || ''
                     });
                 } catch (error) {
@@ -727,7 +765,7 @@
                     }
                 }
             } else {
-                alert('Browser/HP kamu tidak mendukung pengiriman file sebanyak ini sekaligus. Coba kurangi jumlah atau ukuran file.');
+                alert('Browser/HP kamu tidak mendukung pengiriman file sebanyak ini sekaligus. Coba kurangi jumlah/ukuran file.');
             }
         }
 
