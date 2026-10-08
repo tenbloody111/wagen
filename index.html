@@ -455,7 +455,7 @@
                     </label>
                 </div>
                 <div class="settings-item" id="hdToggleGroup" style="display: none;">
-                    <span>Fitur HD (Kirim sbg Dokumen)</span>
+                    <span>Fitur HD Media</span>
                     <label class="switch">
                         <input type="checkbox" id="toggleHdMedia" onchange="onHdToggleChange()">
                         <span class="slider"></span>
@@ -579,15 +579,14 @@
             }
         }
 
-        // Fungsi Memproses File ke Mode HD Murni (MIME-Type diubah agar tidak dikompresi WhatsApp)
+        // Penanganan Mode HD yang Valid (Tetap Menjaga MIME-Type Resmi)
         function processHdFile(file, copyIndex) {
             const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
             const baseName = file.name.replace(ext, '');
             const newName = copyIndex > 0 ? `${baseName}_HD_copy${copyIndex}${ext}` : `${baseName}_HD${ext}`;
 
-            // Menggunakan 'application/octet-stream' memaksa WhatsApp mengirimkannya sebagai Dokumen Kualitas Asli (HD)
             return new File([file], newName, {
-                type: 'application/octet-stream',
+                type: file.type || 'application/octet-stream',
                 lastModified: Date.now()
             });
         }
@@ -633,7 +632,7 @@
                 });
             }
 
-            const hdLabel = isHdActive ? ' [HD Dokumen]' : '';
+            const hdLabel = isHdActive ? ' [HD]' : '';
             if (rawFiles.length === 1) {
                 statusElem.innerText = `${rawFiles[0].name}${hdLabel} (${preparedMediaFiles.length})`;
             } else {
