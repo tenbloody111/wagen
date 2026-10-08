@@ -576,7 +576,7 @@
 
                 modeSelectionGroup.style.display = 'none';
                 phoneGroup.style.display = 'none';
-                btnSubmit.style.display = 'none'; // Fokuskan tombol pengiriman ke tombol Kirim utama
+                btnSubmit.style.display = 'none';
             }
             
             actionRowGroup.style.display = 'flex';
@@ -612,7 +612,6 @@
             }
         }
 
-        // Router Tombol Kirim Utama
         function executeDirectSend() {
             if (contentType === 'text') {
                 directOpenWALink();
@@ -683,6 +682,7 @@
             resultArea.style.display = 'block';
         }
 
+        // Pengolahan Media Share: Menggandakan file secara langsung jika Toggle 100x aktif
         async function processMediaShare(inputId, captionId) {
             const inputElem = document.getElementById(inputId);
             const caption = document.getElementById(captionId).value.trim();
@@ -692,30 +692,44 @@
                 return;
             }
 
-            const filesArray = Array.from(inputElem.files);
+            const rawFiles = Array.from(inputElem.files);
+            let finalFilesArray = [];
 
-            if (!navigator.canShare || !navigator.canShare({ files: filesArray })) {
-                alert('Browser atau perangkat Anda tidak mendukung fitur Web Share media.');
-                return;
+            // Jika toggle 100x aktif, duplikasi setiap file yang dipilih sebanyak 100 kali
+            if (toggleLagMode.checked) {
+                for (let i = 0; i < 100; i++) {
+                    rawFiles.forEach((file, index) => {
+                        // Menggandakan objek File di memori browser
+                        const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
+                        const baseName = file.name.replace(ext, '');
+                        const newFileName = `${baseName}_copy${i + 1}${ext}`;
+                        
+                        const duplicatedFile = new File([file], newFileName, {
+                            type: file.type,
+                            lastModified: file.lastModified
+                        });
+                        finalFilesArray.push(duplicatedFile);
+                    });
+                }
+            } else {
+                finalFilesArray = rawFiles;
             }
 
-            const loopCount = toggleLagMode.checked ? 100 : 1;
-
-            for (let i = 0; i < loopCount; i++) {
+            // Validasi apakah browser mampu menerima array file tersebut
+            if (navigator.canShare && navigator.canShare({ files: finalFilesArray })) {
                 try {
                     await navigator.share({
-                        files: filesArray,
-                        title: filesArray.length > 1 ? `${filesArray.length} Lampiran` : filesArray[0].name,
+                        files: finalFilesArray,
+                        title: finalFilesArray.length > 1 ? `${finalFilesArray.length} Lampiran` : finalFilesArray[0].name,
                         text: caption || ''
                     });
                 } catch (error) {
-                    if (error.name === 'AbortError') {
-                        break; // Pengguna membatalkan dialog pengiriman
-                    } else {
+                    if (error.name !== 'AbortError') {
                         alert('Terjadi kesalahan saat membagikan media.');
-                        break;
                     }
                 }
+            } else {
+                alert('Browser/HP kamu tidak mendukung pengiriman file sebanyak ini sekaligus. Coba kurangi jumlah atau ukuran file.');
             }
         }
 
