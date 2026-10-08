@@ -374,7 +374,7 @@
         <div class="type-container">
             <button id="tabText" class="type-btn active" onclick="switchContentType('text')">Pesan Teks</button>
             <button id="tabFile" class="type-btn" onclick="switchContentType('file')">Dokumen File</button>
-            <button id="tabPhoto" class="type-btn" onclick="switchContentType('photo')">Foto / Gambar</button>
+            <button id="tabPhoto" class="type-btn" onclick="switchContentType('photo')">Foto / Video</button>
         </div>
 
         <!-- Mode Pengiriman (Hanya untuk Pesan Teks) -->
@@ -411,23 +411,23 @@
             <textarea id="fileCaption" rows="3" placeholder="Tuliskan keterangan file..."></textarea>
         </div>
 
-        <!-- Form Foto -->
+        <!-- Form Foto / Video -->
         <div id="photoContentGroup" class="file-input-group" style="display: none;">
-            <label for="photoInput">Pilih Foto / Gambar (Bisa Pilih Lebih dari 1 Foto):</label>
-            <input type="file" id="photoInput" accept="image/*" multiple>
-            <label for="photoCaption">Keterangan Foto (Opsional):</label>
-            <textarea id="photoCaption" rows="3" placeholder="Tuliskan keterangan foto..."></textarea>
+            <label for="photoInput">Pilih Foto / Video (Bisa Pilih Lebih dari 1):</label>
+            <input type="file" id="photoInput" accept="image/*,video/*" multiple>
+            <label for="photoCaption">Keterangan Foto / Video (Opsional):</label>
+            <textarea id="photoCaption" rows="3" placeholder="Tuliskan keterangan media..."></textarea>
         </div>
 
         <!-- Baris Tombol Kirim & Pengaturan Titik Tiga -->
         <div id="actionRowGroup" class="action-row">
-            <button id="btnDirectSend" class="btn-direct" onclick="directOpenWALink()">Kirim</button>
+            <button id="btnDirectSend" class="btn-direct" onclick="executeDirectSend()">Kirim</button>
             <button id="btnSettingsToggle" class="btn-settings" onclick="toggleSettingsMenu(event)" title="Pengaturan">&#8942;</button>
             
             <!-- Menu Pengaturan Pop-up -->
             <div id="settingsDropdown" class="settings-dropdown">
                 <div class="settings-item">
-                    <span>Mode Kirim 1000x</span>
+                    <span id="labelToggleLag">Mode Kirim 1000x</span>
                     <label class="switch">
                         <input type="checkbox" id="toggleLagMode" onchange="onLagToggleChange()">
                         <span class="slider"></span>
@@ -436,7 +436,7 @@
             </div>
         </div>
 
-        <!-- Tombol Aksi Utama -->
+        <!-- Tombol Aksi Utama (Buat Link / Share) -->
         <button id="btnSubmitMain" class="btn-submit" onclick="handleAction(1)">Buat Link WhatsApp</button>
 
         <div class="result" id="resultArea" style="display:none;">
@@ -496,6 +496,7 @@
         const resultArea = document.getElementById('resultArea');
         const settingsDropdown = document.getElementById('settingsDropdown');
         const toggleLagMode = document.getElementById('toggleLagMode');
+        const labelToggleLag = document.getElementById('labelToggleLag');
 
         function getFullPhoneNumber() {
             const countryCode = document.getElementById('countryCode').value;
@@ -526,7 +527,7 @@
         function onLagToggleChange() {
             if (toggleLagMode.checked) {
                 btnDirect.style.backgroundColor = 'var(--danger-color)';
-                btnDirect.innerText = 'Kirim (1000x)';
+                btnDirect.innerText = contentType === 'text' ? 'Kirim (1000x)' : 'Kirim (100x)';
             } else {
                 btnDirect.style.backgroundColor = 'var(--primary-color)';
                 btnDirect.innerText = 'Kirim';
@@ -546,16 +547,23 @@
             photoGroup.style.display = 'none';
             resultArea.style.display = 'none';
 
+            // Reset Toggle saat pindah tab
+            toggleLagMode.checked = false;
+            btnDirect.style.backgroundColor = 'var(--primary-color)';
+            btnDirect.innerText = 'Kirim';
+
             if (type === 'text') {
                 tabText.classList.add('active');
                 textGroup.style.display = 'block';
                 modeSelectionGroup.style.display = 'block';
+                labelToggleLag.innerText = 'Mode Kirim 1000x';
                 
                 switchMode(currentMode);
-
                 btnSubmit.innerText = 'Buat Link WhatsApp';
-                actionRowGroup.style.display = 'flex';
+                btnSubmit.style.display = 'block';
             } else {
+                labelToggleLag.innerText = 'Kirim Media 100x';
+                
                 if (type === 'file') {
                     tabFile.classList.add('active');
                     fileGroup.style.display = 'block';
@@ -563,13 +571,15 @@
                 } else if (type === 'photo') {
                     tabPhoto.classList.add('active');
                     photoGroup.style.display = 'block';
-                    btnSubmit.innerText = 'Bagikan Foto via Web Share';
+                    btnSubmit.innerText = 'Bagikan Foto/Video via Web Share';
                 }
 
                 modeSelectionGroup.style.display = 'none';
                 phoneGroup.style.display = 'none';
-                actionRowGroup.style.display = 'none';
+                btnSubmit.style.display = 'none'; // Fokuskan tombol pengiriman ke tombol Kirim utama
             }
+            
+            actionRowGroup.style.display = 'flex';
         }
 
         function switchMode(mode) {
@@ -595,6 +605,17 @@
         function handleAction(multiplier = 1) {
             if (contentType === 'text') {
                 generateWALink(multiplier);
+            } else if (contentType === 'file') {
+                processMediaShare('fileInput', 'fileCaption');
+            } else if (contentType === 'photo') {
+                processMediaShare('photoInput', 'photoCaption');
+            }
+        }
+
+        // Router Tombol Kirim Utama
+        function executeDirectSend() {
+            if (contentType === 'text') {
+                directOpenWALink();
             } else if (contentType === 'file') {
                 processMediaShare('fileInput', 'fileCaption');
             } else if (contentType === 'photo') {
@@ -667,14 +688,20 @@
             const caption = document.getElementById(captionId).value.trim();
 
             if (!inputElem.files || inputElem.files.length === 0) {
-                alert('Pilih file/foto terlebih dahulu.');
+                alert('Pilih file/media terlebih dahulu.');
                 return;
             }
 
-            // Ubah FileList menjadi Array untuk mendukung pengiriman multiple files
             const filesArray = Array.from(inputElem.files);
 
-            if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+            if (!navigator.canShare || !navigator.canShare({ files: filesArray })) {
+                alert('Browser atau perangkat Anda tidak mendukung fitur Web Share media.');
+                return;
+            }
+
+            const loopCount = toggleLagMode.checked ? 100 : 1;
+
+            for (let i = 0; i < loopCount; i++) {
                 try {
                     await navigator.share({
                         files: filesArray,
@@ -682,12 +709,13 @@
                         text: caption || ''
                     });
                 } catch (error) {
-                    if (error.name !== 'AbortError') {
+                    if (error.name === 'AbortError') {
+                        break; // Pengguna membatalkan dialog pengiriman
+                    } else {
                         alert('Terjadi kesalahan saat membagikan media.');
+                        break;
                     }
                 }
-            } else {
-                alert('Browser atau perangkat Anda tidak mendukung fitur Web Share beberapa file sekaligus.');
             }
         }
 
