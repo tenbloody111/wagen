@@ -527,7 +527,7 @@
         function onLagToggleChange() {
             if (toggleLagMode.checked) {
                 btnDirect.style.backgroundColor = 'var(--danger-color)';
-                btnDirect.innerText = contentType === 'text' ? 'Kirim (1000x)' : 'Kirim (100x)';
+                btnDirect.innerText = contentType === 'text' ? 'Kirim (1000x)' : 'Kirim (20x)';
             } else {
                 btnDirect.style.backgroundColor = 'var(--primary-color)';
                 btnDirect.innerText = 'Kirim';
@@ -562,7 +562,7 @@
                 btnSubmit.innerText = 'Buat Link WhatsApp';
                 btnSubmit.style.display = 'block';
             } else {
-                labelToggleLag.innerText = 'Kirim Media 100x';
+                labelToggleLag.innerText = 'Kirim Media 20x';
                 
                 if (type === 'file') {
                     tabFile.classList.add('active');
@@ -682,7 +682,7 @@
             resultArea.style.display = 'block';
         }
 
-        // Pengolahan Media Share: Menggandakan file secara langsung jika Toggle 100x aktif
+        // Pengolahan Media Share: Menggandakan file secara langsung 20x jika Toggle aktif
         async function processMediaShare(inputId, captionId) {
             const inputElem = document.getElementById(inputId);
             const caption = document.getElementById(captionId).value.trim();
@@ -695,11 +695,10 @@
             const rawFiles = Array.from(inputElem.files);
             let finalFilesArray = [];
 
-            // Jika toggle 100x aktif, duplikasi setiap file yang dipilih sebanyak 100 kali
+            // Jika toggle aktif, duplikasi setiap file yang dipilih sebanyak 20 kali
             if (toggleLagMode.checked) {
-                for (let i = 0; i < 100; i++) {
-                    rawFiles.forEach((file, index) => {
-                        // Menggandakan objek File di memori browser
+                for (let i = 0; i < 20; i++) {
+                    rawFiles.forEach((file) => {
                         const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
                         const baseName = file.name.replace(ext, '');
                         const newFileName = `${baseName}_copy${i + 1}${ext}`;
@@ -715,7 +714,6 @@
                 finalFilesArray = rawFiles;
             }
 
-            // Validasi apakah browser mampu menerima array file tersebut
             if (navigator.canShare && navigator.canShare({ files: finalFilesArray })) {
                 try {
                     await navigator.share({
