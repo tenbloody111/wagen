@@ -405,16 +405,16 @@
 
         <!-- Form File -->
         <div id="fileContentGroup" class="file-input-group" style="display: none;">
-            <label for="fileInput">Pilih File (PDF, Dokumen, Zip):</label>
-            <input type="file" id="fileInput" accept="*/*">
+            <label for="fileInput">Pilih File (Bisa Pilih Lebih dari 1 File):</label>
+            <input type="file" id="fileInput" accept="*/*" multiple>
             <label for="fileCaption">Keterangan Tambahan (Opsional):</label>
             <textarea id="fileCaption" rows="3" placeholder="Tuliskan keterangan file..."></textarea>
         </div>
 
         <!-- Form Foto -->
         <div id="photoContentGroup" class="file-input-group" style="display: none;">
-            <label for="photoInput">Pilih Foto / Gambar:</label>
-            <input type="file" id="photoInput" accept="image/*">
+            <label for="photoInput">Pilih Foto / Gambar (Bisa Pilih Lebih dari 1 Foto):</label>
+            <input type="file" id="photoInput" accept="image/*" multiple>
             <label for="photoCaption">Keterangan Foto (Opsional):</label>
             <textarea id="photoCaption" rows="3" placeholder="Tuliskan keterangan foto..."></textarea>
         </div>
@@ -551,13 +551,11 @@
                 textGroup.style.display = 'block';
                 modeSelectionGroup.style.display = 'block';
                 
-                // Kembalikan ke mode pengiriman yang dipilih sebelumnya
                 switchMode(currentMode);
 
                 btnSubmit.innerText = 'Buat Link WhatsApp';
                 actionRowGroup.style.display = 'flex';
             } else {
-                // Untuk Tab File dan Foto
                 if (type === 'file') {
                     tabFile.classList.add('active');
                     fileGroup.style.display = 'block';
@@ -568,7 +566,6 @@
                     btnSubmit.innerText = 'Bagikan Foto via Web Share';
                 }
 
-                // Sembunyikan opsi mode pengiriman & input nomor, lalu set mode default ke 'no_phone'
                 modeSelectionGroup.style.display = 'none';
                 phoneGroup.style.display = 'none';
                 actionRowGroup.style.display = 'none';
@@ -670,18 +667,18 @@
             const caption = document.getElementById(captionId).value.trim();
 
             if (!inputElem.files || inputElem.files.length === 0) {
-                alert('Pilih file terlebih dahulu.');
+                alert('Pilih file/foto terlebih dahulu.');
                 return;
             }
 
-            const file = inputElem.files[0];
+            // Ubah FileList menjadi Array untuk mendukung pengiriman multiple files
+            const filesArray = Array.from(inputElem.files);
 
-            // Mode pengiriman untuk media selalu menggunakan Web Share (Tanpa Nomor)
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (navigator.canShare && navigator.canShare({ files: filesArray })) {
                 try {
                     await navigator.share({
-                        files: [file],
-                        title: file.name,
+                        files: filesArray,
+                        title: filesArray.length > 1 ? `${filesArray.length} Lampiran` : filesArray[0].name,
                         text: caption || ''
                     });
                 } catch (error) {
@@ -690,7 +687,7 @@
                     }
                 }
             } else {
-                alert('Browser atau perangkat Anda tidak mendukung fitur Web Share secara langsung.');
+                alert('Browser atau perangkat Anda tidak mendukung fitur Web Share beberapa file sekaligus.');
             }
         }
 
