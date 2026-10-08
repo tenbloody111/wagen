@@ -542,7 +542,7 @@
         function onLagToggleChange() {
             if (toggleLagMode.checked) {
                 btnDirect.style.backgroundColor = 'var(--danger-color)';
-                btnDirect.innerText = contentType === 'text' ? 'Kirim (1000x)' : 'Kirim (20x)';
+                btnDirect.innerText = contentType === 'text' ? 'Kirim (1000x)' : 'Kirim (10x)';
             } else {
                 btnDirect.style.backgroundColor = 'var(--primary-color)';
                 btnDirect.innerText = 'Kirim';
@@ -556,7 +556,7 @@
             }
         }
 
-        // Fungsi Menyiapkan Salinan File Secara Otomatis di Web Memory
+        // Fungsi Menyiapkan Salinan File Secara Otomatis di Web Memory (Mode 10x)
         function prepareMediaFiles(inputId, statusId) {
             const inputElem = document.getElementById(inputId);
             const statusElem = document.getElementById(statusId);
@@ -568,7 +568,7 @@
             }
 
             const rawFiles = Array.from(inputElem.files);
-            const loopCount = (contentType !== 'text' && toggleLagMode.checked) ? 20 : 1;
+            const loopCount = (contentType !== 'text' && toggleLagMode.checked) ? 10 : 1;
 
             for (let i = 0; i < loopCount; i++) {
                 rawFiles.forEach((file) => {
@@ -584,7 +584,7 @@
                 });
             }
 
-            // Tampilkan Indikator Contoh: 29828292.jpg (20)
+            // Indikator contoh: foto.jpg (10)
             if (rawFiles.length === 1) {
                 statusElem.innerText = `${rawFiles[0].name} (${preparedMediaFiles.length})`;
             } else {
@@ -621,7 +621,7 @@
                 btnSubmit.innerText = 'Buat Link WhatsApp';
                 btnSubmit.style.display = 'block';
             } else {
-                labelToggleLag.innerText = 'Kirim Media 20x';
+                labelToggleLag.innerText = 'Kirim Media 10x';
                 
                 if (type === 'file') {
                     tabFile.classList.add('active');
@@ -743,7 +743,6 @@
             resultArea.style.display = 'block';
         }
 
-        // Langsung Kirim Media Array yang Sudah Siap Tanpa Menunda/Proses Ulang
         async function processMediaShare(captionId) {
             const caption = document.getElementById(captionId).value.trim();
 
